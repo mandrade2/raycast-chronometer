@@ -195,12 +195,10 @@ export default function Command() {
     <List>
       <List.Item
         title={formatTime(state.currentTime)}
-        subtitle={state.isRunning ? "Running" : "Stopped"}
-        icon={state.isRunning ? Icon.Clock : Icon.Stop}
+        icon={state.isRunning ? Icon.Play : Icon.Stop}
         accessories={[
           {
-            text: formatHumanReadableTime(state.currentTime),
-            tooltip: "Human readable time",
+            text: state.isRunning ? "Running" : "Stopped",
           },
         ]}
         actions={
@@ -215,7 +213,7 @@ export default function Command() {
             )}
             <Action title="Reset" icon={Icon.ArrowCounterClockwise} onAction={handleReset} />
             <Action
-              title="Copy Formatted Time"
+              title="Copy Elapsed Time"
               icon={Icon.Clipboard}
               onAction={() => handleCopyFormattedTime()}
               shortcut={{ modifiers: ["cmd"], key: "c" }}

@@ -173,6 +173,24 @@ export default function Command() {
     }
   };
 
+  const handleCopyFormattedTime = async (timeToCopy?: number) => {
+    try {
+      const timeString = formatTime(timeToCopy ?? state.currentTime);
+      await Clipboard.copy(timeString);
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Copied to clipboard",
+        message: timeString,
+      });
+    } catch (error) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to copy time",
+        message: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
+  };
+
   return (
     <List>
       <List.Item
@@ -197,10 +215,16 @@ export default function Command() {
             )}
             <Action title="Reset" icon={Icon.ArrowCounterClockwise} onAction={handleReset} />
             <Action
-              title="Copy Elapsed Time"
+              title="Copy Formatted Time"
+              icon={Icon.Clipboard}
+              onAction={() => handleCopyFormattedTime()}
+              shortcut={{ modifiers: ["cmd"], key: "c" }}
+            />
+            <Action
+              title="Copy Human Readable Time"
               icon={Icon.Clipboard}
               onAction={() => handleCopyTime()}
-              shortcut={{ modifiers: ["cmd"], key: "c" }}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
             />
           </ActionPanel>
         }

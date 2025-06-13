@@ -1,4 +1,4 @@
-import { ActionPanel, Action, Icon, List, showToast, Toast } from "@raycast/api";
+import { ActionPanel, Action, Icon, List, showToast, Toast, Clipboard } from "@raycast/api";
 import { useState, useEffect } from "react";
 import { getState, setState, ChronometerState, Lap } from "./state";
 
@@ -66,13 +66,21 @@ export default function Command() {
   }, [state.isRunning, state.startTime]);
 
   const loadState = async () => {
-    const savedState = await getState();
-    setLocalState((prev) => ({
-      ...prev,
-      ...savedState,
-      // Keep the current time calculation if running
-      currentTime: savedState.isRunning ? Date.now() - (savedState.startTime || Date.now()) : savedState.currentTime,
-    }));
+    try {
+      const savedState = await getState();
+      setLocalState((prev) => ({
+        ...prev,
+        ...savedState,
+        // Keep the current time calculation if running
+        currentTime: savedState.isRunning ? Date.now() - (savedState.startTime || Date.now()) : savedState.currentTime,
+      }));
+    } catch (error) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to load state",
+        message: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
   };
 
   const updateState = async (newState: Partial<ChronometerState>) => {
@@ -147,12 +155,22 @@ export default function Command() {
     });
   };
 
-  const handleCopyTime = async () => {
-    await showToast({
-      style: Toast.Style.Success,
-      title: "Copied to clipboard",
-      message: formatHumanReadableTime(state.currentTime),
-    });
+  const handleCopyTime = async (timeToCopy?: number) => {
+    try {
+      const timeString = formatHumanReadableTime(timeToCopy ?? state.currentTime);
+      await Clipboard.copy(timeString);
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Copied to clipboard",
+        message: timeString,
+      });
+    } catch (error) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to copy time",
+        message: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
   };
 
   return (
@@ -181,7 +199,7 @@ export default function Command() {
             <Action
               title="Copy Elapsed Time"
               icon={Icon.Clipboard}
-              onAction={handleCopyTime}
+              onAction={() => handleCopyTime()}
               shortcut={{ modifiers: ["cmd"], key: "c" }}
             />
           </ActionPanel>
@@ -195,7 +213,11 @@ export default function Command() {
           icon={Icon.Stopwatch}
           actions={
             <ActionPanel>
-              <Action title="Copy Lap Time" icon={Icon.Clipboard} onAction={() => handleCopyTime()} />
+              <Action 
+                title="Copy Lap Time" 
+                icon={Icon.Clipboard} 
+                onAction={() => handleCopyTime(parseInt(lap.time.replace(/:/g, "")))} 
+              />
             </ActionPanel>
           }
         />
